@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Events</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center">TechStaX Assignment</h1>
+
+        <table id="event-list" class="table table-bordered table-striped table-hover">
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        {% if event.type == 'push' %}
+                        {{ event.author }} pushed to {{ event.to_branch }} on {{ event.timestamp }}
+                        {% elif event.type == 'pull_request' %}
+                        {{ event.author }} submitted a pull request from {{ event.from_branch }} to {{ event.to_branch
+                        }} on {{ event.timestamp }}
+                        {% elif event.type == 'merge' %}
+                        {{ event.author }} merged branch {{ event.from_branch }} to {{ event.to_branch }} on {{
+                        event.timestamp }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to fetch latest events from the server
+        async function fetchEvents() {
+            const response = await fetch('/events');
+            const data = await response.json();
+
+            const eventList = document.getElementById('event-list').getElementsByTagName('tbody')[0];
+            eventList.innerHTML = '';  // Clear the existing list
+
+            data.events.forEach(event => {
+                let tr = document.createElement('tr');
+                let td = document.createElement('td');
+                if (event.type === 'push') {
+                    td.textContent = `${event.author} pushed to ${event.to_branch} on ${new Date(event.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
+                } else if (event.type === 'pull_request') {
+                    td.textContent = `${event.author} submitted a pull request from ${event.from_branch} to ${event.to_branch} on ${new Date(event.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
+                } else if (event.type === 'merge') {
+                    td.textContent = `${event.author} merged branch ${event.from_branch} to ${event.to_branch} on ${new Date(event.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
+                }
+                tr.appendChild(td);
+                eventList.appendChild(tr);
+            });
+        }
+
+        // Poll the server every 15 seconds
+        setInterval(fetchEvents, 15000);
+
+        // Fetch the events immediately when the page loads
+        fetchEvents();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
